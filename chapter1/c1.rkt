@@ -266,5 +266,18 @@
   (lambda (tree)
     (car (number-leaves-helper tree 0))))
 
+;;1.36
+(define g
+  (lambda (p l)
+    (cons p
+          (map (lambda (pr) (cons (+ 1 (car pr))
+                                  (cdr pr)))
+               l))))
+
+(define number-elements
+  (lambda (lst)
+    (if (null? lst) '()
+        (g (list 0 (car lst)) (number-elements (cdr lst))))))
+
 ;;export all
 (provide (all-defined-out))

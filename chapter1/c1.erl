@@ -350,3 +350,18 @@ number_leaves_test() ->
                                                                                                                           2,
                                                                                                                           interior_node(quux, 3, 4))))
     ].
+
+%1.36
+g([N, S], List) ->
+    Rem = [[A+1, B]||[A, B] <- List],
+    [[N, S]|Rem].
+
+number_elements([]) -> [];
+number_elements([A|Rem]) ->
+    R = number_elements(Rem),
+    g([0, A], R).
+
+number_elements_test() ->
+    [
+     ?assert(number_elements([a, b, c, d]) =:= [[0, a], [1, b], [2, c], [3, d]])
+    ].
