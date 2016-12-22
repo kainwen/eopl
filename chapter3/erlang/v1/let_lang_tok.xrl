@@ -13,6 +13,11 @@ let                      : {token, 'let'}.
 =                        : {token, '='}.
 in                       : {token, 'in'}.
 
+unpack                   : {token, 'unpack'}.
+
+cons                     : {token, 'cons'}.
+emptylist                : {token, 'emptylist'}.
+
 -                        : {token, '-'}.
 [(),]                    : {token, list_to_atom(TokenChars)}.
 

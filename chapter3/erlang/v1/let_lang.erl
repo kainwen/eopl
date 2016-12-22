@@ -4,7 +4,9 @@
 
 -export_type([expval/0]).
 
--type expval() :: {num_val, integer()} | {bool_val, boolean()}.
+-type expval() :: {num_val, integer()}
+                | {bool_val, boolean()}
+                | {list_val, [expval()]}.
 
 -spec eval_abt(let_lang_parse:abstract_syntax_tree(), env:environment()) -> expval().
 eval_abt({number_exp, N}, _Env) -> {num_val, N};
@@ -25,7 +27,19 @@ eval_abt({diff_exp, Exp1, Exp2}, Env) ->
 eval_abt({let_exp, Bindlist, Body}, Env) ->
     Binding_pairs = [{Id, eval_abt(E, Env)} || {{var_exp, Id}, E} <- Bindlist],
     New_env = env:extend_env_by_list(Env, Binding_pairs),
+    eval_abt(Body, New_env);
+eval_abt({emptylist}, _Env) ->
+    {list_val, []};
+eval_abt({cons_exp, Exp1, Exp2}, Env) ->
+    V1 = eval_abt(Exp1, Env),
+    {list_val, Vs} = eval_abt(Exp2, Env),
+    {list_val, [V1|Vs]};
+eval_abt({unpack_exp, Vars, Exp, Body}, Env) ->
+    {list_val, Vals} = eval_abt(Exp, Env),
+    Pairs = lists:zip([Id || {var_exp, Id} <- Vars], Vals),
+    New_env = env:extend_env_by_list(Env, Pairs),
     eval_abt(Body, New_env).
+
 
 -spec eval_code(string()) -> expval().
 eval_code(Code) ->
