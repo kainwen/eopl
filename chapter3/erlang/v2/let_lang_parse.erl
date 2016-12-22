@@ -67,9 +67,10 @@ parse_if(Toks) ->
     {{if_exp, Question, Answer, Alternate}, R5}.
 
 parse_check_zero(Tks) ->
-    Rem_toks = wait_for('zero?', Tks),
+    Rem_toks = wait_for('(', wait_for('zero?', Tks)),
     {E, R} = parse_exp(Rem_toks),
-    {{check_zero_exp, E}, R}.
+    R1 = wait_for(')', R),
+    {{check_zero_exp, E}, R1}.
 
 parse_diff(Tks) ->
     R = wait_for('(', wait_for('-', Tks)),

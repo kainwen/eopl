@@ -484,8 +484,10 @@ yystate(33, [C|Ics], Line, Tlen, _, _) when C >= 97, C =< 122 ->
     yystate(22, Ics, Line, Tlen+1, 0, Tlen);
 yystate(33, Ics, Line, Tlen, _, _) ->
     {0,Tlen,Ics,Line,33};
+yystate(32, [C|Ics], Line, Tlen, _, _) when C >= 48, C =< 57 ->
+    yystate(28, Ics, Line, Tlen+1, 11, Tlen);
 yystate(32, Ics, Line, Tlen, _, _) ->
-    {11,Tlen,Ics,Line};
+    {11,Tlen,Ics,Line,32};
 yystate(31, [116|Ics], Line, Tlen, _, _) ->
     yystate(27, Ics, Line, Tlen+1, 14, Tlen);
 yystate(31, [C|Ics], Line, Tlen, _, _) when C >= 48, C =< 57 ->

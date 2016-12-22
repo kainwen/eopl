@@ -65,5 +65,6 @@ eval_script(Fn) ->
 
 eval_test() ->
     [
-     eval_script("code") =:= {num_val, -100}
+     eval_script("code") =:= {num_val, -100},
+     eval_script("code1") =:= {num_val, 12}
     ].
