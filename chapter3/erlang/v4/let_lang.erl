@@ -52,9 +52,15 @@ eval_abt({'apply_exp', Operator, Operands}, Env) ->
     Pairs = lists:zip(Vars, Vals),
     New_env = env:extend_env_by_list(Lex_env, Pairs),
     eval_abt(Body, New_env);
-eval_abt({'letrec_exp', {var_exp, Proc_name}, Paras, Proc_body, Body}, Env) ->
-    New_env = env:extend_env_rec(Proc_name, [P || {var_exp, P} <- Paras], Proc_body, Env),
+eval_abt({'letrec_exp', Proc_binding_list, Body}, Env) ->
+    Name_proc_pairs = [{Name,
+                        [Id || {var_exp, Id} <- Paras],
+                        Proc_body,
+                        Env}
+                       || {{var_exp, Name}, Paras, Proc_body} <- Proc_binding_list],
+    New_env = env:extend_env_rec_by_list(Env, Name_proc_pairs),
     eval_abt(Body, New_env).
+
 
 -spec eval_code(string()) -> expval().
 eval_code(Code) ->

@@ -1,6 +1,9 @@
 -module(env).
 
--export([empty_env/0, extend_env/3, apply_env/2, extend_env_by_list/2, extend_env_rec/4]).
+-export([empty_env/0, extend_env/3, apply_env/2,
+         extend_env_by_list/2, extend_env_rec/4,
+         extend_env_rec_by_list/2
+        ]).
 
 -export_type([environment/0]).
 
@@ -21,6 +24,11 @@ extend_env(Var, Val, Env) ->
 
 extend_env_rec(Proc_name, Paras, Proc_body, Env) ->
     {extend_env_rec, Proc_name, Paras, Proc_body, Env}.
+
+extend_env_rec_by_list(Env, []) -> Env;
+extend_env_rec_by_list(Env, [{Name, Paras, Proc_body, _Env}|Rems]) ->
+    New_env = extend_env_rec(Name, Paras, Proc_body, Env),
+    extend_env_rec_by_list(New_env, Rems).
 
 extend_env_by_list(Env, []) -> Env;
 extend_env_by_list(Env, [{Var, Val}|Rems]) ->

@@ -12,6 +12,9 @@
                   | 'cons' | 'unpack' | 'proc' | 'letrec'
                   | '-' | '(' | ')' | ','.
 
+-type var() :: {var_exp, atom()}.
+-type var_list() :: [var()].
+
 -type abstract_syntax_tree() :: {number_exp, integer()}
                               | {var_exp, atom()}
                               | {check_zero_exp, abstract_syntax_tree()}
@@ -23,7 +26,8 @@
                               | {cons_exp, abstract_syntax_tree(), abstract_syntax_tree()}
                               | {proc_exp, [{var_exp, atom()}], abstract_syntax_tree()}
                               | {apply_exp, abstract_syntax_tree(), [abstract_syntax_tree()]}
-                              | {letrec_exp, {var_exp, atom()}, [{var_exp, atom()}], abstract_syntax_tree(), abstract_syntax_tree()}.
+                              | {letrec_exp, [{var(), var_list(), abstract_syntax_tree()}], abstract_syntax_tree()}.
+
 
 
 -spec parse_exp([tokens]) -> {abstract_syntax_tree(), [tokens]}.
@@ -126,14 +130,10 @@ parse_apply(Tks) ->
 
 parse_letrec(Tks) ->
     R1 = wait_for('letrec', Tks),
-    {Proc_name, R2} = parse_var(R1),
-    R3 = wait_for('(', R2),
-    {Parameters, R4} = parse_multiple(fun parse_var/1, R3, []),
-    R5 =wait_for('=', wait_for(')', R4)),
-    {Proc_body, R6} = parse_exp(R5),
-    R7 = wait_for('in', R6),
-    {Body, R8} = parse_exp(R7),
-    {{letrec_exp, Proc_name, Parameters, Proc_body, Body}, R8}.
+    {Proc_binding_list, R2} = parse_multiple(fun parse_proc_binding/1, R1, []),
+    R3 = wait_for('in', R2),
+    {Body, R4} = parse_exp(R3),
+    {{letrec_exp, Proc_binding_list, Body}, R4}.
 
 %% internal helpers
 
@@ -149,6 +149,14 @@ parse_binding(Tks=[{id, _}|_R]) ->
     R2 = wait_for('=', R1),
     {Exp, R3} = parse_exp(R2),
     {{Var, Exp}, R3}.
+
+parse_proc_binding(Toks) ->
+    {Var, R1} = parse_var(Toks),
+    R2 = wait_for('(', R1),
+    {Paras, R3} = parse_multiple(fun parse_var/1, R2, []),
+    R4 = wait_for('=', wait_for(')', R3)),
+    {Body, R5} = parse_exp(R4),
+    {{Var, Paras, Body}, R5}.
 
 wait_for(Atom, [Atom|Toks]) -> Toks.
 
