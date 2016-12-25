@@ -10,13 +10,13 @@
 
 -spec empty_env() -> environment().
 empty_env() ->
-    fun (_Var) ->
+    fun (_, _) ->
             erlang:error(can_not_find_the_var)
     end.
 
 -spec extend_env(atom(), let_lang:expval(), environment()) -> environment().
 extend_env(Var, Val, Env) ->
-    fun (Search_var) ->
+    fun (Search_var, _E) ->
             case Var =:= Search_var of
                 true -> Val;
                 false -> apply_env(Env, Search_var)
@@ -31,13 +31,13 @@ extend_env_by_list(Env, [{Var, Val}|Rems]) ->
 
 -spec extend_env_rec(environment(), [{atom(), {[atom()], let_lang_parse:abstract_syntax_tree()}}]) -> environment().
 extend_env_rec(Env, Name_procs) ->
-    fun (Search_var) ->
+    fun (Search_var, E) ->
             case proplists:get_value(Search_var, Name_procs) of
                 undefined -> apply_env(Env, Search_var);
-                {Paras, Proc_Body} -> {proc_val, {Paras, Proc_Body, Env}}
+                {Paras, Proc_Body} -> {proc_val, {Paras, Proc_Body, E}}
             end
     end.
 
 -spec apply_env(environment(), atom()) -> let_lang:expval().
 apply_env(Env, Search_var) ->
-    Env(Search_var).
+    Env(Search_var, Env).
