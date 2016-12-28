@@ -1,0 +1,3 @@
+let u = 7
+in unpack x y = cons(u, cons(3, emptylist))
+   in -(x, y)

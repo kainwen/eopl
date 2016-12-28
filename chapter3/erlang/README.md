@@ -7,3 +7,4 @@ Content
 * V3: test dynamic scope
 * V4: add letrec semantics
 * V5: EOPL 3.34
+* V6: EOPL nameless all
