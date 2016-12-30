@@ -37,8 +37,8 @@ apply_env({extend_env, V, Val, Saved_env}, Var) ->
         true -> Val;
         false -> apply_env(Saved_env, Var)
     end;
-apply_env(Env={extend_env_rec, Name_procs, Saved_env}, Var) ->
+apply_env({extend_env_rec, Name_procs, Saved_env}, Var) ->
     case proplists:get_value(Var, Name_procs) of
         undefined -> apply_env(Saved_env, Var);
-        {Paras, Proc_Body} -> {proc_val, {Paras, Proc_Body, Env}}
+        Ref -> Ref
     end.

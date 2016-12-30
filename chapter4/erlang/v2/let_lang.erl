@@ -4,7 +4,7 @@
 
 -export([eval_code/2, eval_script/2]).
 
--export_type([expval/0]).
+-export_type([expval/0, temp_proc/0]).
 
 -type expval() :: {num_val, integer()}
                 | {bool_val, boolean()}
@@ -13,6 +13,7 @@
                               let_lang_parse:abstract_syntax_tree(),
                               env:environment()}}.
 
+-type temp_proc() :: {[atom()], let_lang_parse:abstract_syntax_tree()}.
 %-type denval() :: {ref_val, expval()}.
 
 -spec eval_abt(let_lang_parse:abstract_syntax_tree(), env:environment(), store:store()) -> expval().
@@ -54,7 +55,8 @@ eval_abt({unpack_exp, Vars, Exp, Body}, Env, Store) ->
 eval_abt({'proc_exp', Paras, Body}, Env, _Store) ->
     {proc_val, {[Id || {var_exp, Id} <- Paras], Body, Env}};
 eval_abt({'apply_exp', Operator, Operands}, Env, Store) ->
-    {proc_val, {Vars, Body, Lex_env}} = eval_abt(Operator, Env, Store),
+    {proc_val, {Vars, Body, Lex_env}} = get_proc(eval_abt(Operator, Env, Store),
+                                                 Env),
     Vals = [eval_abt(E, Env, Store) || E <- Operands],
     Pairs = lists:zip(Vars, Vals),
     New_pairs = [{Var, store:newref(Store, Val)}|| {Var, Val} <- Pairs],
@@ -76,7 +78,13 @@ eval_abt({assign_exp, {var_exp, Var}, Exp}, Env, Store) ->
     Ref = env:apply_env(Env, Var),
     store:setref(Store, Ref, Val).
 
+%% internal help function
+get_proc(V={proc_val, _}, _Env) -> V;
+get_proc({Paras, Body}, Env) ->
+    {proc_val, {Paras, Body, Env}}.
 
+
+%% APIs
 -spec eval_code(string(), atom()) -> expval().
 eval_code(Code, Name) ->
 	Abt = let_lang_parse:scan_and_parse(Code),

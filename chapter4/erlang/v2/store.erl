@@ -14,6 +14,8 @@ terminate/2, code_change/3]).
 -type store() :: pid().
 -type ref() :: integer().
 
+-type stored_term() :: let_lang:expval() | let_lang:temp_proc().
+
 
 %% APIs
 -spec init_store(atom()) -> store().
@@ -21,17 +23,17 @@ init_store(Name) ->
     {ok, Store} = gen_server:start_link(?MODULE, [Name], []),
     Store.
 
--spec newref(store(), let_lang:expval()) -> ref().
+-spec newref(store(), stored_term()) -> ref().
 newref(Store, Val) ->
     {ok, Ref} = gen_server:call(Store, {newref, Val}),
     Ref.
 
--spec deref(store(), ref()) -> let_lang:expval().
+-spec deref(store(), ref()) -> stored_term().
 deref(Store, Ref) ->
     {ok, Val} = gen_server:call(Store, {deref, Ref}),
     Val.
 
--spec setref(store(), ref(), let_lang:expval()) -> let_lang:exp_val().
+-spec setref(store(), ref(), stored_term()) -> any().
 setref(Store, Ref, Val) ->
     {ok, true} = gen_server:call(Store, {setref, Ref, Val}),
     {num_val, 42}.
