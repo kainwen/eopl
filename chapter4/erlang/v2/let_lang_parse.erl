@@ -9,8 +9,8 @@
                 | {id, atom()}.
 
 -type keywords() :: 'if' | 'then' | 'else' | 'zero?' | 'let' | '=' | 'in'
-                  | 'cons' | 'unpack' | 'proc' | 'letrec'
-                  | 'newref' | 'deref' | 'setref'
+                  | 'cons' | 'unpack' | 'proc' | 'letrec' | 'set' | 'begin'
+				  | 'end' | ';' 
                   | '-' | '(' | ')' | ','.
 
 -type var() :: {var_exp, atom()}.
