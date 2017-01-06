@@ -1,0 +1,2 @@
+let a = newarray(3, 1)
+in arraylength(a)
