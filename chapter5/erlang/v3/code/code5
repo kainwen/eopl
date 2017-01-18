@@ -1,0 +1,4 @@
+try
+  raise 99
+catch (x)
+  -(x, -1)
