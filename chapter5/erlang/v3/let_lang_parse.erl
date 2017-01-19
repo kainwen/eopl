@@ -15,15 +15,19 @@
              | {letrec_exp, [atom()], [exp()], exp()}
              | {try_exp, exp(), atom(), exp()}
              | {raise_exp, exp()}
-             | {list_exp, [exp()]}.
+             | {list_exp, [exp()]}
+             | {car_exp, exp()}
+             | {cdr_exp, exp()}
+             | {cons_exp, exp(), exp()}
+             | {test_null_exp, exp()}.
 
 -type token() :: keywords()
                 | {integer, integer()}
                 | {id, atom()}.
 
 -type keywords() :: 'if' | 'then' | 'else' | 'zero?' | 'let' | '=' | 'in'
-                  | 'proc' | 'letrec'
-                  | '-' | '(' | ')' | ','.
+                  | 'proc' | 'letrec' | 'try' | 'raise' | 'car' | 'cdr' | 'list'
+                  | '-' | '(' | ')' | ','| 'cons' | 'null?'.
 
 -spec parse([token()]) -> {exp(), [token()]}.
 parse(Toks=[{integer, _}|_Rem_toks]) ->
@@ -49,7 +53,15 @@ parse(Toks=['try'|_Rem_toks]) ->
 parse(Toks=['raise'|_Rem_toks]) ->
     parse_raise(Toks);
 parse(Toks=['list'|_Rem_toks]) ->
-    parse_list(Toks).
+    parse_list(Toks);
+parse(Toks=['car'|_Rem_toks]) ->
+    parse_car(Toks);
+parse(Toks=['cdr'|_Rem_toks]) ->
+    parse_cdr(Toks);
+parse(Toks=['cons'|_Rem_toks]) ->
+    parse_cons(Toks);
+parse(Toks=['null?'|_Rem_toks]) ->
+    parse_test_null(Toks).
 
 
 %% handlers
@@ -127,6 +139,28 @@ parse_list(['list', '('|R]) ->
     {Exps, R1} = parse_multiple_with_delim(fun parse/1, R, ','),
     R2 = wait_for(')', R1),
     {{list_exp, Exps}, R2}.
+
+parse_car(['car', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{car_exp, Exp}, R2}.
+
+parse_cdr(['cdr', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{cdr_exp, Exp}, R2}.
+
+parse_cons(['cons', '('|R]) ->
+    {Exp1, R1} = parse(R),
+    R2 = wait_for(',', R1),
+    {Exp2, R3} = parse(R2),
+    R4 = wait_for(')', R3),
+    {{cons_exp, Exp1, Exp2}, R4}.
+
+parse_test_null(['null?', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{test_null_exp, Exp}, R2}.
 
 %% internal helper functions
 wait_for(Atom, [Atom|Toks]) -> Toks.

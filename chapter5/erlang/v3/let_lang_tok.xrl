@@ -22,6 +22,10 @@ catch                    : {token, 'catch'}.
 raise                    : {token, 'raise'}.
 
 list                     : {token, 'list'}.
+car                      : {token, 'car'}.
+cdr                      : {token, 'cdr'}.
+cons                     : {token, 'cons'}.
+null[?]                  : {token, 'null?'}.
 
 -                        : {token, '-'}.
 [(),]                    : {token, list_to_atom(TokenChars)}.

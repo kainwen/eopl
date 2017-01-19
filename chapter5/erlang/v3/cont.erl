@@ -2,8 +2,9 @@
 
 -export([
          end_cont/0, diff1_cont/3, if_cont/4, test_zero_cont/1,
-         let_cont/4, apply1_cont/3, letrec_cont/4,
-         list_cont/1, try_cont/4, raise_cont/1, multiple_exps_as_list_cont/4
+         let_cont/4, apply1_cont/3, letrec_cont/4, car_cont/1, cdr_cont/1,
+         list_cont/1, try_cont/4, raise_cont/1, multiple_exps_as_list_cont/4,
+         cons1_cont/3, test_null_cont/1
         ]).
 
 -export([apply_cont/2]).
@@ -28,7 +29,12 @@
                       | {try_cont, Handler_pos::integer(), {Env::env(), V::var(), Handler_exp::exp()}}
                       | {raise_cont, Handler_pos::integer(), {}}
                       | {multiple_exps_as_list_cont, Handler_pos::integer(), {env(), exp(), [exp()], [val()]}}
-                      | {list_finish_cont, Handler_pos::integer(), {[val()]}}.
+                      | {list_finish_cont, Handler_pos::integer(), {[val()]}}
+                      | {car_cont, Handler_pos::integer(), {}}
+                      | {cdr_cont, Handler_pos::integer(), {}}
+                      | {cons1_cont, Handler_pos::integer(), {Env::env(), E2::exp()}}
+                      | {cons2_cont, Handler_pos::integer(), {val()}}
+                      | {test_null_cont, Handler_pos::integer(), {}}.
 
 -type cont() :: array:array(cont_element()).
 
@@ -91,22 +97,49 @@ list_cont(Cont) ->
     Cont_element = {list_cont, Handler_pos, {}},
     push_cont(Cont_element, Cont).
 
-%{try_cont, Handler_pos::integer(), {Env::env(), V::var(), Handler_exp::exp()}}.
 -spec try_cont(cont(), env(), var(), exp()) -> cont().
 try_cont(Cont, Env, V, Handler_exp) ->
     Len = array:size(Cont),
     Cont_element = {try_cont, Len, {Env, V, Handler_exp}},
     push_cont(Cont_element, Cont).
 
-%| {raise_cont, Handler_pos::integer(), {}}.
 -spec raise_cont(cont()) -> cont().
 raise_cont(Cont) ->
     Handler_pos = get_handler_pos(Cont),
     Cont_element = {raise_cont, Handler_pos, {}},
     push_cont(Cont_element, Cont).
 
-%multiple_exps_as_list_cont(Cont, Env, Exps, Acc_list)
-%{multiple_exps_as_list_cont, Handler_pos::integer(), {env(), [exp()], [val()]}}.
+-spec car_cont(cont()) -> cont().
+car_cont(Cont) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {car_cont, Handler_pos, {}},
+    push_cont(Cont_element, Cont).
+
+-spec cdr_cont(cont()) -> cont().
+cdr_cont(Cont) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {cdr_cont, Handler_pos, {}},
+    push_cont(Cont_element, Cont).
+
+-spec cons1_cont(cont(), env(), exp()) -> cont().
+cons1_cont(Cont, Env, E2) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {cons1_cont, Handler_pos, {Env, E2}},
+    push_cont(Cont_element, Cont).
+
+-spec cons2_cont(cont(), val()) -> cont().
+cons2_cont(Cont, Val1) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {cons2_cont, Handler_pos, {Val1}},
+    push_cont(Cont_element, Cont).
+
+%{test_null_cont, Handler_pos::integer(), {}}.
+-spec test_null_cont(cont()) -> cont().
+test_null_cont(Cont) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {test_null_cont, Handler_pos, {}},
+    push_cont(Cont_element, Cont).
+
 -spec multiple_exps_as_list_cont(cont(), env(), [exp()], [val()]) -> cont().
 multiple_exps_as_list_cont(Cont, _Env, [], Acc_list) ->
     Handler_pos = get_handler_pos(Cont),
@@ -116,7 +149,6 @@ multiple_exps_as_list_cont(Cont, Env, [Exp|Exps], Acc_list) ->
     Handler_pos = get_handler_pos(Cont),
     Cont_element = {multiple_exps_as_list_cont, Handler_pos, {Env, Exp, Exps, Acc_list}},
     push_cont(Cont_element, Cont).
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec apply_cont(cont(), val()|[val()]) -> val().
@@ -184,7 +216,32 @@ apply_cont(Cont, Val) ->
         {list_finish_cont, _Handler_pos, {Acc_list}} ->
             Saved_cont = array:resize(Len-1, Cont),
             Val_list = lists:reverse([Val|Acc_list]),
-            apply_cont(Saved_cont, Val_list)
+            apply_cont(Saved_cont, Val_list);
+        {car_cont, _Handler_pos, {}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            {list_val, [Car|_]} = Val,
+            apply_cont(Saved_cont, Car);
+        {cdr_cont, _Handler_pos, {}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            {list_val, [_|Cdr]} = Val,
+            apply_cont(Saved_cont, {list_val, Cdr});
+        {cons1_cont, _Handler_pos, {Env, E2}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            New_cont = cons2_cont(Saved_cont, Val),
+            let_lang:eval(E2, Env, New_cont);
+        {cons2_cont, _Handler_pos, {Val1}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            {list_val, Lst} = {list_val, Val},
+            Cons_val = {list_val, [Val1|Lst]},
+            apply_cont(Saved_cont, Cons_val);
+        {test_null_cont, _Handler_pos, {}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            {list_val, Lst} = Val,
+            Bool = case Lst of
+                       [] -> true;
+                       _ -> false
+                   end,
+            apply_cont(Saved_cont, {bool_val, Bool})
     end.
 
 -spec apply_handler(cont(), val()) -> val().
