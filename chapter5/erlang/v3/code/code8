@@ -1,0 +1,5 @@
+try
+let p = proc(x, y) -(x, y)
+in (p 2)
+catch (x)
+x

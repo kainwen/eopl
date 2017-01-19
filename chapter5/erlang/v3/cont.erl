@@ -190,8 +190,13 @@ apply_cont(Cont, Val) ->
             let_lang:eval_multiple_exps_as_list(Operands, Env, New_cont);
         {apply2_cont, _Handler_pos, {{proc_val, Paras, Body, Lex_env}}} ->
             Saved_cont = array:resize(Len-1, Cont),
-            New_env = env:extend_env_by_list(Lex_env, lists:zip(Paras, Val)),
-            let_lang:eval(Body, New_env, Saved_cont);
+            case length(Val) =:= length(Paras) of
+                true ->
+                    New_env = env:extend_env_by_list(Lex_env, lists:zip(Paras, Val)),
+                    let_lang:eval(Body, New_env, Saved_cont);
+                false ->
+                    let_lang:eval({raise_exp, {number, 128}}, env:empty_env(), Saved_cont)
+            end;
         {list_cont, _Handler_pos, {}} ->
             Saved_cont = array:resize(Len-1, Cont),
             apply_cont(Saved_cont, {list_val, Val});
@@ -247,10 +252,15 @@ apply_cont(Cont, Val) ->
 -spec apply_handler(cont(), val()) -> val().
 apply_handler(Cont, Val) ->
     Pos = get_handler_pos(Cont),
-    {try_cont, Pos, {Env, V, Handler_exp}} = array:get(Pos, Cont),
-    New_env = env:extend_env(V, Val, Env),
-    Saved_cont = array:resize(Pos, Cont),
-    let_lang:eval(Handler_exp, New_env, Saved_cont).
+    case Pos >= 0 of
+        true ->
+            {try_cont, Pos, {Env, V, Handler_exp}} = array:get(Pos, Cont),
+            New_env = env:extend_env(V, Val, Env),
+            Saved_cont = array:resize(Pos, Cont),
+            let_lang:eval(Handler_exp, New_env, Saved_cont);
+        false ->
+            erlang:error(Val)
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%
 get_handler_pos(Cont) ->

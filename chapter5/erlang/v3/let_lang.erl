@@ -135,5 +135,6 @@ eval_test() ->
      eval_script("code/code4") =:= {list_val,[{num_val,1},{num_val,2},{num_val,3}]},
      eval_script("code/code5") =:= {num_val,100},
      eval_script("code/code6") =:= {num_val,-1},
-     eval_script("code/code7") =:= {num_val,-1}
+     eval_script("code/code7") =:= {num_val,-1},
+     eval_script("code/code8") =:= {num_val, 128}
     ].
