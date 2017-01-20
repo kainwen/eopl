@@ -1,4 +1,4 @@
 try
   raise 99
-catch (x)
+catch (x, c)
   -(x, -1)

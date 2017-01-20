@@ -3,8 +3,8 @@
 -export([
          end_cont/0, diff1_cont/3, if_cont/4, test_zero_cont/1,
          let_cont/4, apply1_cont/3, letrec_cont/4, car_cont/1, cdr_cont/1,
-         list_cont/1, try_cont/4, raise_cont/1, multiple_exps_as_list_cont/4,
-         cons1_cont/3, test_null_cont/1
+         list_cont/1, try_cont/5, raise_cont/1, multiple_exps_as_list_cont/4,
+         cons1_cont/3, test_null_cont/1, invoke1_cont/3
         ]).
 
 -export([apply_cont/2]).
@@ -26,7 +26,7 @@
                       | {apply2_cont, Handler_pos::integer(), {val()}}
                       | {letrec_cont, Handler_pos::integer(), {env(), [var()], exp()}}
                       | {list_cont, Handler_pos::integer(), {}}
-                      | {try_cont, Handler_pos::integer(), {Env::env(), V::var(), Handler_exp::exp()}}
+                      | {try_cont, Handler_pos::integer(), {Env::env(), V::var(), C::var(), Handler_exp::exp()}}
                       | {raise_cont, Handler_pos::integer(), {}}
                       | {multiple_exps_as_list_cont, Handler_pos::integer(), {env(), exp(), [exp()], [val()]}}
                       | {list_finish_cont, Handler_pos::integer(), {[val()]}}
@@ -34,7 +34,9 @@
                       | {cdr_cont, Handler_pos::integer(), {}}
                       | {cons1_cont, Handler_pos::integer(), {Env::env(), E2::exp()}}
                       | {cons2_cont, Handler_pos::integer(), {val()}}
-                      | {test_null_cont, Handler_pos::integer(), {}}.
+                      | {test_null_cont, Handler_pos::integer(), {}}
+                      | {invoke1_cont, Handler_pos::integer(), {Env::env(), E2::exp()}}
+                      | {invoke2_cont, Handler_pos::integer(), {Ct::cont()}}.
 
 -type cont() :: array:array(cont_element()).
 
@@ -97,10 +99,10 @@ list_cont(Cont) ->
     Cont_element = {list_cont, Handler_pos, {}},
     push_cont(Cont_element, Cont).
 
--spec try_cont(cont(), env(), var(), exp()) -> cont().
-try_cont(Cont, Env, V, Handler_exp) ->
+-spec try_cont(cont(), env(), var(), var(), exp()) -> cont().
+try_cont(Cont, Env, V, C, Handler_exp) ->
     Len = array:size(Cont),
-    Cont_element = {try_cont, Len, {Env, V, Handler_exp}},
+    Cont_element = {try_cont, Len, {Env, V, C, Handler_exp}},
     push_cont(Cont_element, Cont).
 
 -spec raise_cont(cont()) -> cont().
@@ -133,11 +135,22 @@ cons2_cont(Cont, Val1) ->
     Cont_element = {cons2_cont, Handler_pos, {Val1}},
     push_cont(Cont_element, Cont).
 
-%{test_null_cont, Handler_pos::integer(), {}}.
 -spec test_null_cont(cont()) -> cont().
 test_null_cont(Cont) ->
     Handler_pos = get_handler_pos(Cont),
     Cont_element = {test_null_cont, Handler_pos, {}},
+    push_cont(Cont_element, Cont).
+
+-spec invoke1_cont(cont(), env(), exp()) -> cont().
+invoke1_cont(Cont, Env, E2) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {invoke1_cont, Handler_pos, {Env, E2}},
+    push_cont(Cont_element, Cont).
+
+-spec invoke2_cont(cont(), cont()) -> cont().
+invoke2_cont(Cont, Ct) ->
+    Handler_pos = get_handler_pos(Cont),
+    Cont_element = {invoke2_cont, Handler_pos, {Ct}},
     push_cont(Cont_element, Cont).
 
 -spec multiple_exps_as_list_cont(cont(), env(), [exp()], [val()]) -> cont().
@@ -246,7 +259,13 @@ apply_cont(Cont, Val) ->
                        [] -> true;
                        _ -> false
                    end,
-            apply_cont(Saved_cont, {bool_val, Bool})
+            apply_cont(Saved_cont, {bool_val, Bool});
+        {invoke1_cont, _Handler_pos, {Env, E2}} ->
+            Saved_cont = array:resize(Len-1, Cont),
+            New_cont = invoke2_cont(Saved_cont, Val),
+            let_lang:eval(E2, Env, New_cont);
+        {invoke2_cont, _Handler_pos, {{cont_val, Ct}}} ->
+            apply_cont(Ct, Val)
     end.
 
 -spec apply_handler(cont(), val()) -> val().
@@ -254,8 +273,9 @@ apply_handler(Cont, Val) ->
     Pos = get_handler_pos(Cont),
     case Pos >= 0 of
         true ->
-            {try_cont, Pos, {Env, V, Handler_exp}} = array:get(Pos, Cont),
-            New_env = env:extend_env(V, Val, Env),
+            {try_cont, Pos, {Env, V, C, Handler_exp}} = array:get(Pos, Cont),
+            New_env = env:extend_env(C, {cont_val, Cont},
+                                     env:extend_env(V, Val, Env)),
             Saved_cont = array:resize(Pos, Cont),
             let_lang:eval(Handler_exp, New_env, Saved_cont);
         false ->

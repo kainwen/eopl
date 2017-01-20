@@ -20,6 +20,7 @@ letrec                   : {token, 'letrec'}.
 try                      : {token, 'try'}.
 catch                    : {token, 'catch'}.
 raise                    : {token, 'raise'}.
+invoke_cont              : {token, 'invoke_cont'}.
 
 list                     : {token, 'list'}.
 car                      : {token, 'car'}.

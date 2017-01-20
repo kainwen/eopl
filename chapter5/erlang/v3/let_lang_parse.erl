@@ -13,13 +13,14 @@
              | {proc_exp, [atom()], exp()}
              | {apply_exp, exp(), [exp()]}
              | {letrec_exp, [atom()], [exp()], exp()}
-             | {try_exp, exp(), atom(), exp()}
+             | {try_exp, exp(), atom(), atom(), exp()}
              | {raise_exp, exp()}
              | {list_exp, [exp()]}
              | {car_exp, exp()}
              | {cdr_exp, exp()}
              | {cons_exp, exp(), exp()}
-             | {test_null_exp, exp()}.
+             | {test_null_exp, exp()}
+             | {invoke_cont_exp, exp(), exp()}.
 
 -type token() :: keywords()
                 | {integer, integer()}
@@ -27,7 +28,7 @@
 
 -type keywords() :: 'if' | 'then' | 'else' | 'zero?' | 'let' | '=' | 'in'
                   | 'proc' | 'letrec' | 'try' | 'raise' | 'car' | 'cdr' | 'list'
-                  | '-' | '(' | ')' | ','| 'cons' | 'null?'.
+                  | '-' | '(' | ')' | ','| 'cons' | 'null?'| 'invoke_cont'.
 
 -spec parse([token()]) -> {exp(), [token()]}.
 parse(Toks=[{integer, _}|_Rem_toks]) ->
@@ -61,7 +62,10 @@ parse(Toks=['cdr'|_Rem_toks]) ->
 parse(Toks=['cons'|_Rem_toks]) ->
     parse_cons(Toks);
 parse(Toks=['null?'|_Rem_toks]) ->
-    parse_test_null(Toks).
+    parse_test_null(Toks);
+parse(Toks=['invoke_cont'|_Rem_toks]) ->
+    parse_invoke_cont(Toks).
+
 
 
 %% handlers
@@ -125,10 +129,11 @@ parse_letrec(['letrec'|R]) ->
 parse_try(['try'|R]) ->
     {Exp, R1} = parse(R),
     R2 = wait_for('(', wait_for('catch', R1)),
-    {{var, V}, R3} = parse_var(R2),
+    {[{var, V}, {var, C}], R3} = parse_multiple_with_delim(
+                                   fun parse_var/1, R2, ','),
     R4 = wait_for(')', R3),
     {Handler_exp, R5} = parse(R4),
-    {{try_exp, Exp, V, Handler_exp}, R5}.
+    {{try_exp, Exp, V, C, Handler_exp}, R5}.
 
 parse_raise(['raise'|R]) ->
     {Exp, R1} = parse(R),
@@ -161,6 +166,11 @@ parse_test_null(['null?', '('|R]) ->
     {Exp, R1} = parse(R),
     R2 = wait_for(')', R1),
     {{test_null_exp, Exp}, R2}.
+
+parse_invoke_cont(['invoke_cont', '('|R]) ->
+    {[Exp1, Exp2], R1} = parse_multiple_with_delim(fun parse/1, R, ','),
+    R2 = wait_for(')', R1),
+    {{invoke_cont_exp, Exp1, Exp2}, R2}.
 
 %% internal helper functions
 wait_for(Atom, [Atom|Toks]) -> Toks.

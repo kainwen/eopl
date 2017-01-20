@@ -9,7 +9,8 @@
 -type expval() :: {num_val, integer()}
                 | {bool_val, boolean()}
                 | {proc_val, [atom()], let_lang_parse:exp(), env:environment()}
-                | {list_val, [expval()]}.
+                | {list_val, [expval()]}
+                | {cont_val, cont:cont()}.
 
 -spec eval(let_lang_parse:exp(), env:environment(), cont:continuation()) -> expval().
 eval(Exp={number, _}, Env, Cont) ->
@@ -32,7 +33,7 @@ eval(Exp={letrec_exp, _, _, _}, Env, Cont) ->
     eval_letrec(Exp, Env, Cont);
 eval(Exp={list_exp, _}, Env, Cont) ->
     eval_list(Exp, Env, Cont);
-eval(Exp={try_exp, _, _, _}, Env, Cont) ->
+eval(Exp={try_exp, _, _, _, _}, Env, Cont) ->
     eval_try(Exp, Env, Cont);
 eval(Exp={raise_exp, _}, Env, Cont) ->
     eval_raise(Exp, Env, Cont);
@@ -43,7 +44,9 @@ eval(Exp={cdr_exp, _}, Env, Cont) ->
 eval(Exp={cons_exp, _, _}, Env, Cont) ->
     eval_cons(Exp, Env, Cont);
 eval(Exp={test_null_exp, _}, Env, Cont) ->
-    eval_test_null(Exp, Env, Cont).
+    eval_test_null(Exp, Env, Cont);
+eval(Exp={invoke_cont_exp, _, _}, Env, Cont) ->
+    eval_invoke_cont(Exp, Env, Cont).
 
 
 %% handlers
@@ -87,8 +90,8 @@ eval_list({list_exp, Exps}, Env, Cont) ->
     New_cont = cont:list_cont(Cont),
     eval_multiple_exps_as_list(Exps, Env, New_cont).
 
-eval_try({try_exp, Exp, V, Handler_exp}, Env, Cont) ->
-    New_cont = cont:try_cont(Cont, Env, V, Handler_exp),
+eval_try({try_exp, Exp, V, C, Handler_exp}, Env, Cont) ->
+    New_cont = cont:try_cont(Cont, Env, V, C, Handler_exp),
     eval(Exp, Env, New_cont).
 
 eval_raise({raise_exp, Exp}, Env, Cont) ->
@@ -110,6 +113,11 @@ eval_cons({cons_exp, E1, E2}, Env, Cont) ->
 eval_test_null({test_null_exp, Exp}, Env, Cont) ->
     New_cont = cont:test_null_cont(Cont),
     eval(Exp, Env, New_cont).
+
+eval_invoke_cont({invoke_cont_exp, E1, E2}, Env, Cont) ->
+    New_cont = cont:invoke1_cont(Cont, Env, E2),
+    eval(E1, Env, New_cont).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_multiple_exps_as_list([], _Env, Cont) ->
@@ -136,5 +144,6 @@ eval_test() ->
      eval_script("code/code5") =:= {num_val,100},
      eval_script("code/code6") =:= {num_val,-1},
      eval_script("code/code7") =:= {num_val,-1},
-     eval_script("code/code8") =:= {num_val, 128}
+     eval_script("code/code8") =:= {num_val, 128},
+     eval_script("code/code9") =:= {num_val, 101}
     ].

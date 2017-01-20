@@ -8,5 +8,5 @@ let index
                    else -((inner cdr(lst)), -1)
           in proc (lst)
              try (inner lst)
-             catch (x,c) -1
+             catch (x,c) invoke_cont(c, x)
 in ((index 5) list(2, 3))
