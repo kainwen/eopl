@@ -1,0 +1,3 @@
+let a = list(1, 2, 3, 4)
+in
+  -(car(a), car(cdr(a)))
