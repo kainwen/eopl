@@ -1,13 +1,13 @@
 let buffer = 0
 in let producer = proc (n)
          letrec
-           wait(k) = if zero?(k)
+           Wait(k) = if zero?(k)
                      then set buffer = n
                      else begin
                             print(-(k, -200));
-                            (wait -(k, 1))
+                            (Wait -(k, 1))
                           end
-         in (wait 5)
+         in (Wait 5)
    in let consumer = proc (d)
            letrec busywait (k) = if zero?(buffer)
                                  then begin

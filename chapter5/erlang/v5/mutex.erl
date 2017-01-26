@@ -47,8 +47,8 @@ signal_mutex(Store, Sched, Mutex, Thread) ->
                     store:setref(Store, Ref_is_closed, false),
                     scheduler:run_thread(Thread);
                 false ->
-                    {Thread, Rem_wait_queue} = random_queue:out(Wait_queue),
-                    scheduler:place_on_ready_queue(Sched, Thread),
+                    {Thd, Rem_wait_queue} = random_queue:out(Wait_queue),
+                    scheduler:place_on_ready_queue(Sched, Thd),
                     store:setref(Store, Ref_wait_queue, Rem_wait_queue),
                     scheduler:run_thread(Thread)
             end;

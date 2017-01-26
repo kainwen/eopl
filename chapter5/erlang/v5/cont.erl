@@ -138,8 +138,10 @@ apply_cont(Cont, Val, Store, Sched) ->
             case Cont of
                 {end_mainthread_cont} ->
                     ok = scheduler:set_final_answer(Sched, Val),
+                    io:format("<< end of main thread!! >>~n"),
                     scheduler:run_next_thread(Sched);
                 {end_subthread_cont} ->
+                    io:format("<< end of sub thread!! >>~n"),
                     scheduler:run_next_thread(Sched);
                 {diff1_cont, Saved_cont, E2, Env} ->
                     New_cont = diff2_cont(Saved_cont, Val),
