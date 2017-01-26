@@ -4,8 +4,7 @@
 
 -export([is_empty/1, in/2, out/1, new/0]).
 
--type thread() :: scheduler:thread().
--type queue() :: [thread()].
+-type queue() :: list().
 
 -spec new() -> queue().
 new() ->
@@ -15,11 +14,11 @@ new() ->
 is_empty([]) -> true;
 is_empty(_) -> false.
 
--spec in(queue(), thread()) -> queue().
+-spec in(queue(), list()) -> queue().
 in(Q, Term) ->
     [Term|Q].
 
--spec out(queue()) -> {thread(), queue()}.
+-spec out(queue()) -> {any(), queue()}.
 out([]) -> erlang:error(empty_random_queue_cannot_dequeue);
 out(Q) ->
     Len = length(Q),
@@ -27,7 +26,7 @@ out(Q) ->
     remove_nth(Q, Index_to_remove).
 
 %% Internal functions
--spec remove_nth(queue(), integer()) -> {thread(), queue()}.
+-spec remove_nth(queue(), integer()) -> {any(), queue()}.
 remove_nth([], _) ->
     erlang:error(can_not_remove_from_empty_queue);
 remove_nth([A|Rems], 1) ->

@@ -5,7 +5,7 @@
          diff1_cont/3, if_cont/4, test_zero_cont/1,
          exps_cont/4, let_cont/4, apply1_cont/3, letrec_cont/4, list_cont/1,
          car_cont/1, cdr_cont/1, test_null_cont/1, assign_cont/3, block_cont/3,
-         print_cont/1, spawn_cont/1,
+         print_cont/1, spawn_cont/1, wait_cont/1, signal_cont/1,
          apply_cont/4
         ]).
 
@@ -36,7 +36,9 @@
               | {assign_cont, C::cont(), V::var(), Env::env()}
               | {block_cont, C::cont(), Env::env(), Exps::[exp()]}
               | {print_cont, C::cont()}
-              | {spawn_cont, C::cont()}.
+              | {spawn_cont, C::cont()}
+              | {wait_cont, C::cont()}
+              | {signal_cont, C::cont()}.
 
 -spec end_mainthread_cont() -> cont().
 end_mainthread_cont() ->
@@ -109,6 +111,14 @@ print_cont(Cont) ->
 -spec spawn_cont(cont()) -> cont().
 spawn_cont(Cont) ->
     {spawn_cont, Cont}.
+
+-spec wait_cont(cont()) -> cont().
+wait_cont(Cont) ->
+    {wait_cont, Cont}.
+
+-spec signal_cont(cont()) -> cont().
+signal_cont(Cont) ->
+    {signal_cont, Cont}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec exps_cont(cont(), env(), [exp()], [val()]) -> cont().
@@ -214,7 +224,15 @@ apply_cont(Cont, Val, Store, Sched) ->
                 {spawn_cont, Saved_cont} ->
                     Thread = {just_spawn, Val, Store, Sched},
                     ok = scheduler:place_on_ready_queue(Sched, Thread),
-                    apply_cont(Saved_cont, {num_val, 29}, Store, Sched)
+                    apply_cont(Saved_cont, {num_val, 29}, Store, Sched);
+                {wait_cont, Saved_cont} ->
+                    {mutex_val, Mutex} = Val,
+                    Thread = {intermid, Saved_cont, {num_val, 53}, Store, Sched},
+                    mutex:wait_for_mutex(Store, Sched, Mutex, Thread);
+                {signal_cont, Saved_cont} ->
+                    {mutex_val, Mutex} = Val,
+                    Thread = {intermid, Saved_cont, {num_val, 53}, Store, Sched},
+                    mutex:signal_mutex(Store, Sched, Mutex, Thread)
             end
     end.
 

@@ -9,6 +9,8 @@
          run_next_thread/1, decrement_time/1, set_final_answer/2
         ]).
 
+-export([run_thread/1]).
+
 -export([
          init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3
@@ -107,7 +109,7 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
 {ok, State}.
 
-%% Internal functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec run_thread(thread()) -> val().
 run_thread({just_spawn, {proc_val, [], Body, Lex_env}, Store, Sched}) ->
     thread_lang:eval(Body, Lex_env, cont:end_subthread_cont(), Store, Sched);

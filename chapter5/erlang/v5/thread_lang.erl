@@ -9,11 +9,13 @@
 -type env() :: env:env().
 -type store() :: store:store().
 -type sched() :: scheduler:scheduler().
+-type mutex() :: mutex:mutex().
 
 -type expval() :: {num_val, integer()}
                 | {bool_val, boolean()}
                 | {list_val, [expval()]}
-                | {proc_val, [atom()], exp(), env()}.
+                | {proc_val, [atom()], exp(), env()}
+                | {mutex_val, mutex()}.
 
 -type tmp_proc() :: {Paras::[atom()], Body::exp()}.
 
@@ -52,7 +54,13 @@ eval(Exp={block_exp, _}, Env, Cont, Store, Sched) ->
 eval(Exp={print_exp, _}, Env, Cont, Store, Sched) ->
     eval_print(Exp, Env, Cont, Store, Sched);
 eval(Exp={spawn_exp, _}, Env, Cont, Store, Sched) ->
-    eval_spawn(Exp, Env, Cont, Store, Sched).
+    eval_spawn(Exp, Env, Cont, Store, Sched);
+eval(Exp={mutex_exp}, Env, Cont, Store, Sched) ->
+    eval_mutex(Exp, Env, Cont, Store, Sched);
+eval(Exp={wait_exp, _}, Env, Cont, Store, Sched) ->
+    eval_wait(Exp, Env, Cont, Store, Sched);
+eval(Exp={signal_exp, _}, Env, Cont, Store, Sched) ->
+    eval_signal(Exp, Env, Cont, Store, Sched).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 eval_number({number, N}, _Env, Cont, Store, Sched) ->
@@ -126,6 +134,18 @@ eval_print({print_exp, Exp}, Env, Cont, Store, Sched) ->
 
 eval_spawn({spawn_exp, Exp}, Env, Cont, Store, Sched) ->
     New_cont = cont:spawn_cont(Cont),
+    eval(Exp, Env, New_cont, Store, Sched).
+
+eval_mutex({mutex_exp}, _Env, Cont, Store, Sched) ->
+    Val = {mutex_val, mutex:new_mutex(Store)},
+    cont:apply_cont(Cont, Val, Store, Sched).
+
+eval_wait({wait_exp, Exp}, Env, Cont, Store, Sched) ->
+    New_cont = cont:wait_cont(Cont),
+    eval(Exp, Env, New_cont, Store, Sched).
+
+eval_signal({signal_exp, Exp}, Env, Cont, Store, Sched) ->
+    New_cont = cont:signal_cont(Cont),
     eval(Exp, Env, New_cont, Store, Sched).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

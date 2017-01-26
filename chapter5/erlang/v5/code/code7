@@ -1,0 +1,27 @@
+let x = 0
+in let mut = mutex()
+   in let incr_x = proc (id)
+                    proc ()
+                      begin
+                        wait(mut);
+                        set x = -(x, -1);
+                        signal(mut)
+                      end
+      in begin
+           spawn((incr_x 100));
+           spawn((incr_x 200));
+           spawn((incr_x 300));
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x)
+         end
+     

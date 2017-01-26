@@ -30,6 +30,9 @@ begin                          : {token, 'begin'}.
 end                            : {token, 'end'}.
 
 spawn                          : {token, 'spawn'}.
+mutex                          : {token, 'mutex'}.
+wait                           : {token, 'wait'}.
+signal                         : {token, 'signal'}.
 
 print                          : {token, 'print'}.
 
@@ -38,7 +41,7 @@ print                          : {token, 'print'}.
 [(),]                          : {token, list_to_atom(TokenChars)}.
 
 -?[0-9]+                       : {token, {integer, list_to_integer(TokenChars)}}.
-[a-zA-Z][a-zA-Z0-9]*           : {token, {id, list_to_atom(TokenChars)}}.
+[a-zA-Z_][a-zA-Z0-9_]*           : {token, {id, list_to_atom(TokenChars)}}.
 
 \t              : skip_token.
 \n              : skip_token.

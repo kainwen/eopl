@@ -21,7 +21,10 @@
              | {assign_exp, atom(), exp()}
              | {block_exp, [exp()]}
              | {spawn_exp, exp()}
-             | {print_exp, exp()}.
+             | {print_exp, exp()}
+             | {mutex_exp}
+             | {wait_exp, exp()}
+             | {signal_exp, exp()}.
 
 -type token() :: keywords()
                 | {integer, integer()}
@@ -30,7 +33,8 @@
 -type keywords() :: 'if' | 'then' | 'else' | 'zero?' | 'let' | '=' | 'in'
                   | 'proc' | 'letrec' | 'car' | 'cdr' | 'list'
                   | '-' | '(' | ')' | ','| 'cons' | 'null?'
-                  | 'set' | 'begin' | 'end' | ';' | 'spawn' | 'print'.
+                  | 'set' | 'begin' | 'end' | ';' | 'spawn' | 'print'
+                  | 'wait' | 'mutex' | 'signal'.
 
 -spec parse([token()]) -> {exp(), [token()]}.
 parse(Toks=[{integer, _}|_Rem_toks]) ->
@@ -68,7 +72,13 @@ parse(Toks=['begin'|_Rem_toks]) ->
 parse(Toks=['spawn'|_Rem_toks]) ->
     parse_spawn(Toks);
 parse(Toks=['print'|_Rem_toks]) ->
-    parse_print(Toks).
+    parse_print(Toks);
+parse(Toks=['mutex'|_Rem_toks]) ->
+    parse_mutex(Toks);
+parse(Toks=['wait'|_Rem_toks]) ->
+    parse_wait(Toks);
+parse(Toks=['signal'|_Rem_toks]) ->
+    parse_signal(Toks).
 
 
 %% handlers
@@ -168,14 +178,27 @@ parse_block(['begin'|R]) ->
     {{block_exp, Exps}, R2}.
 
 parse_spawn(['spawn', '('|R]) ->
-    {Proc={proc_exp, _Paras, _Body}, R1} = parse(R),
+    {Exp, R1} = parse(R),
     R2 = wait_for(')', R1),
-    {{spawn_exp, Proc}, R2}.
+    {{spawn_exp, Exp}, R2}.
 
 parse_print(['print', '('|R]) ->
     {Exp, R1} = parse(R),
     R2 = wait_for(')', R1),
     {{print_exp, Exp}, R2}.
+
+parse_mutex(['mutex','(',')'|R]) ->
+    {{mutex_exp}, R}.
+
+parse_wait(['wait', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{wait_exp, Exp}, R2}.
+
+parse_signal(['signal', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{signal_exp, Exp}, R2}.
 
 %% internal helper functions
 wait_for(Atom, [Atom|Toks]) -> Toks.

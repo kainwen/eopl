@@ -1,0 +1,22 @@
+let x = 0
+in let incr_x = proc (id)
+                    proc ()
+                        set x = -(x, -1)
+      in begin
+           spawn((incr_x 100));
+           spawn((incr_x 200));
+           spawn((incr_x 300));
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x);
+           print(x)
+         end
+     

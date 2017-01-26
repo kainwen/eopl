@@ -12,7 +12,7 @@ terminate/2, code_change/3]).
 -type store() :: pid().
 -type ref() :: integer().
 
--type stored_term() :: thread_lang:expval() | thread_lang:tmp_proc().
+-type stored_term() :: any().
 
 
 %% APIs
