@@ -118,13 +118,12 @@ compile2erl({apply_exp, Operator, Operands}, Ns) ->
     {Final_code, Final_answer}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%rename_variable_in_abt(Exp={let_exp, _Paras, _Body}) ->
-%    to_finish...
-
 compile_file(Fn) ->
     Ns = var_name:start(),
     Exp = let_lang_parse:scan_and_parse_file(Fn),
-    {A, B} = compile2erl(Exp, Ns),
+    Senv = senv:empty_senv(),
+    Renamed_exp = rename:rename_with_senv(Exp, Senv),
+    {A, B} = compile2erl(Renamed_exp, Ns),
     Code = safe_join([
                         head(),
                         enclose("test", {A, B})
