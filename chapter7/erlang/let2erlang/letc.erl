@@ -1,6 +1,6 @@
 -module(letc).
 
--export([compile_file/1]).
+-export([compile_file/2]).
 
 -type exp() :: let_lang_parse:exp().
 
@@ -118,12 +118,14 @@ compile2erl({apply_exp, Operator, Operands}, Ns) ->
     {Final_code, Final_answer}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-compile_file(Fn) ->
+compile_file(Fn, Store_name) ->
     Ns = var_name:start(),
-    Exp = let_lang_parse:scan_and_parse_file(Fn),
+    Store = store:init_store(Store_name),
     Senv = senv:empty_senv(),
-    Renamed_exp = rename:rename_with_senv(Exp, Senv),
-    {A, B} = compile2erl(Renamed_exp, Ns),
+    Exp = rename:rename_with_senv(let_lang_parse:scan_and_parse_file(Fn),
+                                  Senv,
+                                  Store),
+    {A, B} = compile2erl(Exp, Ns),
     Code = safe_join([
                         head(),
                         enclose("test", {A, B})
