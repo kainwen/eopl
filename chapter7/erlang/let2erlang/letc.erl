@@ -118,31 +118,30 @@ compile2erl({apply_exp, Operator, Operands}, Ns) ->
     {Final_code, Final_answer}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-compile_file(Fn, Store_name) ->
+compile_file(Fn, Output) ->
     Ns = var_name:start(),
-    Store = store:init_store(Store_name),
+    Name_server = name_server:start(),
     Senv = senv:empty_senv(),
     Exp = rename:rename_with_senv(let_lang_parse:scan_and_parse_file(Fn),
                                   Senv,
-                                  Store),
+                                  Name_server),
     {A, B} = compile2erl(Exp, Ns),
     Code = safe_join([
-                        head(),
-                        enclose("test", {A, B})
+                        head(atom_to_list(Output)),
+                        enclose("main", {A, B})
                        ], "\n"),
-    io:format(Code),
-    io:format("~n~n").
+    file:write_file(string:concat(atom_to_list(Output), ".erl"),
+                    Code).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 atom_to_var(A) ->
     string:to_upper(atom_to_list(A)).
 
-head() ->
+head(Module) ->
     safe_join([
-                 "-module(test).",
-                 "-export([test/0]).",
-                 ""
-                ], "\n").
+               string:join(["-module(", Module, ")."], ""),
+               "-export([main/0]).\n"
+              ], "\n").
 
 enclose(Func_name, {Body, V}) ->
     safe_join([
