@@ -1,6 +1,6 @@
 -module(checked_type).
 
--export([parse_type/1, reduce_type/1]).
+-export([parse_type/1, reduce_type/1, card/1]).
 
 -export_type([tp/0]).
 
@@ -8,7 +8,8 @@
             | {bool}
             | {arrow, tp(), tp()}
             | {star, [tp()]}
-            | {list, tp()}.
+            | {list, tp()}
+            | {empty_list}.
 
 
 parse_type(Toks) ->
@@ -20,6 +21,9 @@ parse_type(Toks) ->
 reduce_type({star, [Tp]}) -> Tp;
 reduce_type(Tp) -> Tp.
 
+-spec card(tp()) -> integer().
+card({star, Tps}) -> length(Tps);
+card(_) -> 1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_type_helper([], Collect_types, Op_stack) ->

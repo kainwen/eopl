@@ -17,6 +17,15 @@ in                       : {token, 'in'}.
 
 letrec                   : {token, 'letrec'}.
 
+[{]                      : {token, '{'}.
+[}]                      : {token, '}'}.
+match_tuple              : {token, 'match_tuple'}.
+
+list                     : {token, 'list'}.
+cons                     : {token, 'cons'}.
+cdr                      : {token, 'cdr'}.
+null[?]                  : {token, 'null?'}.
+
 int                      : {token, 'int'}.
 bool                     : {token, 'bool'}.
 ->                       : {token, '->'}.

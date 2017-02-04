@@ -14,15 +14,23 @@
              | {let_exp, [atom()], [exp()], exp()}
              | {proc_exp, [{atom(), tp()}], exp()}
              | {apply_exp, exp(), [exp()]}
-             | {letrec_exp, [{atom(), tp()}], [exp()], exp()}.
+             | {letrec_exp, [{atom(), tp()}], [exp()], exp()}
+             | {tuple_exp, [exp()]}
+             | {match_tuple_exp, [atom()], exp(), exp()}
+             | {list_exp, [exp()]}
+             | {cons_exp, exp(), exp()}
+             | {cdr_exp, exp()}
+             | {test_null_exp, exp()}.
 
 -type token() :: keywords()
-                | {integer, integer()}
-                | {id, atom()}.
+               | {integer, integer()}
+               | {id, atom()}.
 
 -type keywords() :: 'if' | 'then' | 'else' | 'zero?' | 'let' | '=' | 'in'
-                  | 'proc' | 'letrec' | ':'
-                  | '-' | '(' | ')' | ','.
+                  | 'proc' | 'letrec' | ':' | '{' | '}' | 'match_tuple'
+                  | '-' | '(' | ')' | ','
+                  | 'int' | 'bool' | '->' | '*' | '[' | ']'
+                  | 'list' | 'cons' | 'cdr' | 'null?'.
 
 -spec parse([token()]) -> {exp(), [token()]}.
 parse(Toks=[{integer, _}|_Rem_toks]) ->
@@ -42,8 +50,19 @@ parse(Toks=['('|_Rem_toks]) ->
 parse(Toks=['let'|_Rem_toks]) ->
     parse_let(Toks);
 parse(Toks=['letrec'|_Rem_toks]) ->
-    parse_letrec(Toks).
-
+    parse_letrec(Toks);
+parse(Toks=['{'|_Rem_toks]) ->
+    parse_tuple(Toks);
+parse(Toks=['match_tuple'|_Rem_toks]) ->
+    parse_match_tuple(Toks);
+parse(Toks=['list'|_Rem_toks]) ->
+    parse_list(Toks);
+parse(Toks=['cons'|_Rem_toks]) ->
+    parse_cons(Toks);
+parse(Toks=['cdr'|_Rem_toks]) ->
+    parse_cdr(Toks);
+parse(Toks=['null?'|_Rem_toks]) ->
+    parse_test_null(Toks).
 
 %% handlers
 parse_number([{integer, N}|R]) ->
@@ -105,6 +124,39 @@ parse_letrec(['letrec'|R]) ->
                                    || {Proc_name, Rt, _} <- Proc_defs],
     Proc_bodys = [Proc_body || {_, _, Proc_body} <- Proc_defs],
     {{letrec_exp, Proc_names_with_return_type, Proc_bodys, Body}, R3}.
+
+parse_tuple(['{'|R]) ->
+    {Tp_elements, R1} = parse_multiple_with_delim(fun parse/1, R, ','),
+    R2 = wait_for('}', R1),
+    {{tuple_exp, Tp_elements}, R2}.
+
+parse_match_tuple(['match_tuple'|R]) ->
+    {Vars, R1} = parse_multiple_with_delim(fun parse_var/1, R, ''),
+    R2 = wait_for('=', R1),
+    {Tuple, R3} = parse(R2),
+    R4 = wait_for('in', R3),
+    {Body, R5} = parse(R4),
+    {{match_tuple_exp, [V || {var, V} <- Vars], Tuple, Body}, R5}.
+
+parse_list(['list', '('|R]) ->
+    {Exps, R1} = parse_multiple_with_delim(fun parse/1, R, ','),
+    R2 = wait_for(')', R1),
+    {{list_exp, Exps}, R2}.
+
+parse_cons(['cons', '('|R]) ->
+    {[Exp1, Exp2], R1} = parse_multiple_with_delim(fun parse/1, R, ','),
+    R2 = wait_for(')', R1),
+    {{cons_exp, Exp1, Exp2}, R2}.
+
+parse_cdr(['cdr', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{cdr_exp, Exp}, R2}.
+
+parse_test_null(['null?', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{test_null_exp, Exp}, R2}.
 
 %% internal helper functions
 wait_for(Atom, [Atom|Toks]) -> Toks.
