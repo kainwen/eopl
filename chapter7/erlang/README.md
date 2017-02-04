@@ -1,3 +1,8 @@
+## Typer
+
+* CHECKED: eopl7.3 language
+
+## Some small compilers
 
 The code generating method here is using string:join, and of course it is ugly.
 
