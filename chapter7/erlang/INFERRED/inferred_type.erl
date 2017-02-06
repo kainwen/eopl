@@ -8,8 +8,7 @@
             | {bool}
             | {arrow, tp(), tp()}
             | {star, [tp()]}
-            | {list, tp()}
-            | {empty_list}.
+            | {list, tp()}.
 
 
 parse_type(Toks) ->

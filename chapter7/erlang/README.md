@@ -1,6 +1,7 @@
 ## Typer
 
 * CHECKED: eopl7.3 language
+* INFERRED: eopl7.4 language
 
 ## Some small compilers
 
