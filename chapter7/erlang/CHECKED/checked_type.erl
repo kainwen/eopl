@@ -1,6 +1,6 @@
 -module(checked_type).
 
--export([parse_type/1, reduce_type/1, card/1]).
+-export([parse_type/1, reduce_type/1, card/1, print_type/1]).
 
 -export_type([tp/0]).
 
@@ -24,6 +24,20 @@ reduce_type(Tp) -> Tp.
 -spec card(tp()) -> integer().
 card({star, Tps}) -> length(Tps);
 card(_) -> 1.
+
+print_type({int}) -> "int";
+print_type({bool}) -> "bool";
+print_type({arrow, T1, T2}) ->
+    S1 = print_type(T1),
+    S2 = print_type(T2),
+    string:join(["(", S1, "->", S2, ")"], " ");
+print_type({star, Tps}) ->
+    S = [print_type(Tp) || Tp <- Tps],
+    string:join(S, " * ");
+print_type({list, Tp}) ->
+    S = print_type(Tp),
+    string:join(["string of (", S, ")"], " ");
+print_type({empty_list}) -> "[]".
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_type_helper([], Collect_types, Op_stack) ->

@@ -183,7 +183,9 @@ assert_type(T1, T2, Exp) ->
         true -> type_check;
         false ->
             io:format("Type didn't match: ~p != ~p in EXP: ~p~n",
-                      [T1, T2, Exp]),
+                      [checked_type:print_type(T1),
+                       checked_type:print_type(T2),
+                       Exp]),
             erlang:error(type_error)
     end.
 
@@ -199,4 +201,5 @@ assert_arg_num(Pn, An, Exp) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 typer(Fn) ->
     Exp = checked_parse:scan_and_parse_file(Fn),
-    type_of(Exp, tenv:empty_tenv()).
+    Tp = type_of(Exp, tenv:empty_tenv()),
+    checked_type:print_type(Tp).
