@@ -1,0 +1,7 @@
+let func = proc (x) -(x, -1)
+in
+  let x = list(1, 2, (func 3))
+  in
+     let y = car(cdr(x))
+     in
+       y

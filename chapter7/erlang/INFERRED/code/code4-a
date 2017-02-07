@@ -1,0 +1,8 @@
+let x = {1, 2, zero?(3), proc(x) -(x,1)}
+in
+   match_tuple n1 n2 b1 func = x
+   in
+      if b1 then
+         (func n1)
+      else
+         (func n2)

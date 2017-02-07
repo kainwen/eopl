@@ -23,6 +23,7 @@ match_tuple              : {token, 'match_tuple'}.
 
 list                     : {token, 'list'}.
 cons                     : {token, 'cons'}.
+car                      : {token, 'car'}.
 cdr                      : {token, 'cdr'}.
 null[?]                  : {token, 'null?'}.
 

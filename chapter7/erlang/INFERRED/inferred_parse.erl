@@ -62,10 +62,13 @@ parse(Toks=['list'|_Rem_toks]) ->
     parse_list(Toks);
 parse(Toks=['cons'|_Rem_toks]) ->
     parse_cons(Toks);
+parse(Toks=['car'|_Rem_toks]) ->
+    parse_car(Toks);
 parse(Toks=['cdr'|_Rem_toks]) ->
     parse_cdr(Toks);
 parse(Toks=['null?'|_Rem_toks]) ->
     parse_test_null(Toks).
+
 
 %% handlers
 parse_number([{integer, N}|R]) ->
@@ -150,6 +153,11 @@ parse_cons(['cons', '('|R]) ->
     {[Exp1, Exp2], R1} = parse_multiple_with_delim(fun parse/1, R, ','),
     R2 = wait_for(')', R1),
     {{cons_exp, Exp1, Exp2}, R2}.
+
+parse_car(['car', '('|R]) ->
+    {Exp, R1} = parse(R),
+    R2 = wait_for(')', R1),
+    {{car_exp, Exp}, R2}.
 
 parse_cdr(['cdr', '('|R]) ->
     {Exp, R1} = parse(R),

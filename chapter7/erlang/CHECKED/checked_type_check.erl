@@ -33,6 +33,8 @@ type_of(Exp={list_exp, _}, Tenv) ->
     type_of_list(Exp, Tenv);
 type_of(Exp={cons_exp, _, _}, Tenv) ->
     type_of_cons(Exp, Tenv);
+type_of(Exp={car_exp, _}, Tenv) ->
+    type_of_car(Exp, Tenv);
 type_of(Exp={cdr_exp, _}, Tenv) ->
     type_of_cdr(Exp, Tenv);
 type_of(Exp={test_null_exp, _}, Tenv) ->
@@ -151,6 +153,17 @@ type_of_cons(Exp={cons_exp, E1, E2}, Tenv) ->
             erlang:error(type_error)
     end.
 
+type_of_car(Exp={car_exp, E}, Tenv) ->
+    Tp = type_of(E, Tenv),
+    case Tp of
+        {empty_list} ->
+            io:format("car an empty list: ~p~n", [Exp]),
+            erlang:error(type_error);
+        {list, Tplist} -> Tplist;
+        _ ->
+            io:format("car a value which is not a list: ~p~n", [Exp])
+    end.
+
 type_of_cdr(Exp={cdr_exp, E}, Tenv) ->
     Tp = type_of(E, Tenv),
     case Tp of
@@ -158,7 +171,7 @@ type_of_cdr(Exp={cdr_exp, E}, Tenv) ->
             io:format("cdr an empty list: ~p~n", [Exp]),
             erlang:error(type_error);
         {list, Tplist} ->
-            Tplist;
+            {list, Tplist};
         _ ->
             io:format("cdr a value which is not a list: ~p~n", [Exp])
     end.
