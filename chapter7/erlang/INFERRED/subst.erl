@@ -1,7 +1,8 @@
 -module(subst).
 
 -export([
-         new/0, add_to_subst/3, apply_subst/2, subst_one/3, is_safe/2
+         new/0, add_to_subst/3, apply_subst/2,
+         subst_one/3, is_safe/2
         ]).
 
 -export_type([type_var/0, type_with_var/0, subst/0]).

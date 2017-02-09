@@ -65,7 +65,8 @@ type_of_test_zero({test_zero_exp, E}, Tenv, Subst) ->
 
 type_of_let({let_exp, Vars, Exps, Body}, Tenv, Subst) ->
     {Tps, S} = type_of_list_exps(Exps, Tenv, Subst, []),
-    New_tenv = tenv:extend_tenv(Tenv, lists:zip(Vars, Tps)),
+    Special_tps = [{special, Tp} || Tp <- Tps],
+    New_tenv = tenv:extend_tenv(Tenv, lists:zip(Vars, Special_tps)),
     type_of(Body, New_tenv, S).
 
 type_of_proc({proc_exp, Paras, Body}, Tenv, Subst) ->
@@ -162,8 +163,9 @@ get_proc_input_type({proc_exp, Paras, _Body}) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 typer(Fn) ->
     Exp = inferred_parse:scan_and_parse_file(Fn),
+    R_exp = reform_let:reform(Exp),
     type_var_server:start(),
-    {Tp, Subst} = type_of(Exp, tenv:empty_tenv(), subst:new()),
+    {Tp, Subst} = type_of(R_exp, tenv:empty_tenv(), subst:new()),
     Result_type = subst:apply_subst(Subst, Tp),
     print_type(Result_type).
 
@@ -175,7 +177,7 @@ print_type({arrow, T1, T2}) ->
     S2 = print_type(T2),
     string:join(["(", S1, " -> ", S2, ")"], "");
 print_type({star, Tps}) ->
-    string:join([print_type(Tp) || Tp <- Tps], "*");
+    string:join([print_type(Tp) || Tp <- Tps], " * ");
 print_type({list, Tp}) ->
     S = print_type(Tp),
     string:join([S, "list"], " ").

@@ -1,0 +1,16 @@
+let map = proc (f)
+            letrec foo (l) =
+                      if null?(l)
+                      then list()
+                      else cons( (f car(l)),
+                                 (foo cdr(l)) )
+            in foo
+in letrec
+     even (y) = if zero?(y)
+                then zero?(0)
+                else if zero?(-(y, 1))
+                     then zero?(1)
+                     else (even -(y, 2))
+   in
+     {((map proc (x: int) -(x, 1)) list(3,5))
+      ((map even) list(3,5))}

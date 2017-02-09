@@ -8,8 +8,8 @@ empty_tenv() ->
 extend_tenv(Tenv, Pairs) ->
     {tenv, Pairs, Tenv}.
 
-apply_tenv({empty_tenv}, _) ->
-    erlang:error(can_not_find_var_type_in_tenv);
+apply_tenv({empty_tenv}, V) ->
+    erlang:error({can_not_find_var_type_in_tenv, V});
 apply_tenv({tenv, Var_tps, Saved_tenv}, Var) ->
     case proplists:get_value(Var, Var_tps) of
         undefined -> apply_tenv(Saved_tenv, Var);

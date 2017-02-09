@@ -21,6 +21,7 @@
              | {tuple_exp, [exp()]}
              | {match_tuple_exp, [atom()], exp(), exp()}
              | {list_exp, [exp()]}
+             | {car_exp, exp()}
              | {cons_exp, exp(), exp()}
              | {cdr_exp, exp()}
              | {test_null_exp, exp()}.
