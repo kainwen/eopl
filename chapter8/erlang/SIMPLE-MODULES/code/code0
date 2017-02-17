@@ -1,0 +1,12 @@
+module m1
+  interface
+    <u: int
+     n: <v: int>>
+  body
+    module m2
+      interface <v: int>
+      body <v = 33>
+    <u = 44
+     n = m2>
+
+from m1 take n
